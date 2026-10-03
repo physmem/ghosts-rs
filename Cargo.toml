@@ -1,0 +1,53 @@
+[package]
+name = "ghosts-rs"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies.windows]
+version = "0.62"
+features = [
+    "Wdk_System_SystemInformation",
+    "Win32_Foundation",
+    "Win32_Graphics_Dxgi",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Com",
+    "Win32_System_Console",
+    "Win32_System_DataExchange",
+    "Win32_System_Kernel",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Win32_System_Ole",
+    "Win32_System_SystemInformation",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
+    "Win32_System_Time",
+    "Win32_System_WindowsProgramming",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+[dependencies]
+anyhow = "1.0.104"
+const-fnv1a-hash = "1.1.0"
+log = "0.4.34"
+pelite = "0.10.0"
+phf = { version = "0.14", default-features = false, features = ["macros"] }
+retour = { version = "0.4.0-alpha.4", features = ["static-detour"] }
+simple_logger = "5.2.0"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = true
