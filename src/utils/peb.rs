@@ -37,6 +37,13 @@ impl Peb {
         self.modules().first()
     }
 
+    #[inline]
+    pub fn module(&self, name: &str) -> Option<&'static Module> {
+        self.modules()
+            .iter()
+            .find(|module| module.name.eq_ignore_ascii_case(name))
+    }
+
     pub fn modules(&self) -> &'static [Module] {
         static MODULES: OnceLock<Vec<Module>> = OnceLock::new();
 

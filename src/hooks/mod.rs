@@ -1,5 +1,6 @@
 pub use add_dobj_surfaces_to_scene::*;
 pub use is_item_unlocked::*;
+pub use present::*;
 
 use crate::managers::PatternManager;
 
@@ -8,6 +9,7 @@ use std::mem;
 
 mod add_dobj_surfaces_to_scene;
 mod is_item_unlocked;
+mod present;
 
 pub fn setup() -> Result<()> {
     unsafe {
@@ -32,6 +34,15 @@ pub fn setup() -> Result<()> {
                 hooked_add_dobj_surfaces_to_scene,
             )?
             .enable()?;
+
+        PresentHook
+            .initialize(
+                mem::transmute::<_, PresentFn>(
+                    PatternManager::instance().address("Present").unwrap(),
+                ),
+                hooked_present,
+            )?
+            .enable()?;
     }
 
     Ok(())
@@ -41,5 +52,6 @@ pub fn restore() {
     unsafe {
         IsItemUnlockedHook.disable().ok();
         RAddDObjSurfacesToSceneHook.disable().ok();
+        PresentHook.disable().ok();
     }
 }

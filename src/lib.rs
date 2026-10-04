@@ -17,6 +17,7 @@ use windows::Win32::UI::WindowsAndMessaging::{PostMessageA, WM_CLOSE};
 pub static SHOULD_RUN: AtomicBool = AtomicBool::new(true);
 
 mod hooks;
+mod iw;
 mod managers;
 mod utils;
 
@@ -27,7 +28,7 @@ fn on_attach() -> Result<()> {
 
     SimpleLogger::new()
         .with_level(LevelFilter::Off)
-        .with_module_level("ghosts-rs", LevelFilter::Trace)
+        .with_module_level("ghosts_rs", LevelFilter::Trace)
         .init()?;
 
     log::info!("Initializing");

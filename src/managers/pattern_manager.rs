@@ -12,6 +12,7 @@ type AddressTransformFn = fn(usize) -> usize;
 
 pub struct Pattern {
     pub signature: &'static [Atom],
+    pub module: Option<&'static str>,
     pub cursor: Option<usize>,
     pub transform: Option<AddressTransformFn>,
 }
@@ -20,9 +21,15 @@ impl Pattern {
     pub const fn new(signature: &'static [Atom]) -> Self {
         Self {
             signature,
+            module: None,
             cursor: None,
             transform: None,
         }
+    }
+
+    pub const fn in_module(mut self, module: &'static str) -> Self {
+        self.module = Some(module);
+        self
     }
 
     pub const fn cursor(mut self, cursor: usize) -> Self {
@@ -39,7 +46,10 @@ impl Pattern {
 static PATTERNS: phf::Map<&'static str, Pattern> = phf_map! {
     "IsItemUnlocked" =>
         Pattern::new(pattern!("48895c24? 48896c24? 48897424? 57 4883ec? 8be9 418bf8")),
-        "R_AddDObjSurfacesToScene" => Pattern::new(pattern!("4056 4154 4155 4157 4883ec48")),
+    "R_AddDObjSurfacesToScene" => Pattern::new(pattern!("4056 4154 4155 4157 4883ec48")),
+    "Dvar_FindVar" => Pattern::new(pattern!("48895c24? 57 4883ec? 48896c24")),
+    "Present" => Pattern::new(pattern!("48895c24? 48896c24? 56 57 4154 4156 4157 4883ec? 418bf0"))
+        .in_module("GameOverlayRenderer64.dll"),
 };
 
 pub struct PatternManager {
@@ -49,14 +59,7 @@ pub struct PatternManager {
 
 impl PatternManager {
     pub fn new() -> Self {
-        let module = match Peb::instance().main_module() {
-            Some(module) => Some(module),
-            None => {
-                log::error!("Failed to get process base");
-
-                None
-            }
-        };
+        let peb = Peb::instance();
 
         let mut patterns = HashMap::new();
         let mut addresses = HashMap::new();
@@ -64,7 +67,24 @@ impl PatternManager {
         for (name, pattern) in PATTERNS.entries() {
             let key = (*name).into();
 
-            if let Some(address) = module.and_then(|module| Self::scan(module, name, pattern)) {
+            let module = match pattern.module {
+                Some(module) => peb.module(module),
+                None => peb.main_module(),
+            };
+
+            let module = match module {
+                Some(module) => module,
+                None => {
+                    log::error!(
+                        "{name}: module {} is not loaded",
+                        pattern.module.unwrap_or("<main>")
+                    );
+
+                    continue;
+                }
+            };
+
+            if let Some(address) = Self::scan(module, name, pattern) {
                 addresses.insert(key, address);
             }
 
